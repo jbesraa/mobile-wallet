@@ -1,7 +1,7 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_x86_64_android_workaround();
     tauri_build::build();
-    tonic_build::compile_protos("proto/walletrpc.proto")?;
+    // tonic_build::compile_protos("proto/walletrpc.proto")?;
     Ok(())
 }
 

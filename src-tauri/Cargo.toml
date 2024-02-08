@@ -1,0 +1,46 @@
+[package]
+name = "desktop-v2"
+version = "0.0.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+[[bin]] 
+name = "walletrpc-client"
+path = "src/rpc_client.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "desktop_v2_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0-beta", features = [] }
+tonic-build = "0.10"
+
+[dependencies]
+tauri = { version = "2.0.0-beta", features = [] }
+tauri-plugin-shell = "2.0.0-beta"
+tauri-plugin-fs = "2.0.0-beta"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+ldk-node = "0.2.1"
+tauri-plugin-log = "2.0.0-beta"
+
+
+bip39 = { version = "2.0.0", features = ["rand"] }
+home-dir = "0.1.0"
+directories = "5.0.1"
+tokio = "1.35.1"
+anyhow = "1.0.79"
+tonic = "0.10"
+prost = "0.12"
+lazy_static = "1.4.0"
+lightning-persister = { version = "0.0.119" }
+pathos = {version = "0.2", features = ["android"] }
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]

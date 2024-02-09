@@ -17,6 +17,10 @@ export interface NodeActions {
 	get_listening_address: () => Promise<string>;
 	get_onchain_address: () => Promise<string>;
 	get_onchain_balance: () => Promise<string>;
+	send_onchain_transaction: (
+		adress: string,
+		amout_msat: number
+	) => Promise<string>;
 	update_config: (i: UpdateConfigInput) => Promise<boolean>;
 	get_logs: () => Promise<string[]>;
 	sync_wallet: () => Promise<boolean>;
@@ -124,6 +128,22 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 			return res;
 		} catch (e) {
 			console.log("Error get_esplora_address", e);
+			return "";
+		}
+	}
+
+	async function send_onchain_transaction(
+		address: string,
+		amount_sat: number
+	): Promise<string> {
+		try {
+			const res: string = await invoke("send_onchain_transaction", {
+				address,
+				amountSats: amount_sat,
+			});
+			return res;
+		} catch (e) {
+			console.log("Error send_onchain_tx", e);
 			return "";
 		}
 	}
@@ -245,6 +265,7 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		get_listening_address,
 		get_onchain_address,
 		get_onchain_balance,
+		send_onchain_transaction,
 		sync_wallet,
 		update_config,
 		connect_to_peer,

@@ -2,11 +2,7 @@
 pub mod lightning;
 use tauri_plugin_log::{Target, TargetKind};
 pub mod paths;
-// pub mod rpc_client;
 pub mod wallet;
-// pub mod walletrpc {
-//     tonic::include_proto!("walletrpc");
-// }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -27,7 +23,10 @@ pub fn run() {
             lightning::get_esplora_address,
             lightning::get_listening_address,
             lightning::get_onchain_address,
-            lightning::get_onchain_balance
+            lightning::get_onchain_balance,
+            lightning::send_onchain_transaction,
+            lightning::create_invoice,
+            lightning::pay_invoice
             // lightning::get_listening_address,
             // lightning::connect_to_node,
             // lightning::list_peers,

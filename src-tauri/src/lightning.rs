@@ -143,72 +143,151 @@ pub fn get_onchain_balance() -> String {
     }
 }
 
-// #[tauri::command]
-// pub fn close_channel(node_name: String, node_id: String, channel_id: [u8; 32]) -> bool {
-//     let node = init_lazy(None).expect("Failed to initialize node");
-//     let pub_key = match PublicKey::from_str(&node_id) {
-//         Ok(key) => key,
-//         Err(e) => {
-//             dbg!(&e);
-//             return false;
-//         }
-//     };
-//     let channel_id = ChannelId(channel_id);
-//     match node.close_channel(&channel_id, pub_key) {
-//         Ok(_) => return true,
-//         Err(e) => {
-//             dbg!(&e);
-//             return false;
-//         }
-//     };
-// }
+#[tauri::command]
+pub fn send_onchain_transaction(address: String, amount_sats: u64) -> bool {
+    let node = match init_lazy(None) {
+        Some(n) => n,
+        None => {
+            dbg!("Failed to initialize node in new_onchain_address()");
+            return false;
+        }
+    };
+    let txid = match node.send_to_onchain_address(
+        &ldk_node::bitcoin::Address::from_str(&address)
+            .unwrap()
+            .assume_checked(),
+        amount_sats,
+    ) {
+        Ok(txid) => txid,
+        Err(e) => {
+            dbg!(e);
+            return false;
+        }
+    };
+    dbg!(txid);
+    true
+}
 
-// #[tauri::command]
-// pub fn open_channel(
-//     node_name: String,
-//     node_id: String,
-//     net_address: String,
-//     channel_amount_sats: u64,
-//     push_to_counterparty_msat: u64,
-//     announce_channel: bool,
-// ) -> bool {
-//     let empty_result = false;
-//     let node = init_lazy(None).expect("Failed to initialize node");
-//     let target_node_id = match PublicKey::from_str(&node_id) {
-//         Ok(key) => key,
-//         Err(e) => {
-//             dbg!(&e);
-//             return empty_result;
-//         }
-//     };
-//     let target_address = match SocketAddress::from_str(&net_address) {
-//         Ok(address) => address,
-//         Err(e) => {
-//             dbg!(&e);
-//             return false;
-//         }
-//     };
-//     let push_to_counterparty_msat: Option<u64> = if push_to_counterparty_msat > 1 {
-//         Some(push_to_counterparty_msat)
-//     } else {
-//         None
-//     };
-//     let channel_config = None;
-//     match node.connect_open_channel(
-//         target_node_id,
-//         target_address,
-//         channel_amount_sats,
-//         push_to_counterparty_msat,
-//         channel_config,
-//         announce_channel,
-//     ) {
-//         Ok(_) => true,
-//         Err(e) => {
-//             dbg!(&e);
-//             false
-//         }
-//     }
-// }
+#[tauri::command]
+pub fn create_invoice(amount_sats: u64, description: &str) -> Option<String> {
+    let node = match init_lazy(None) {
+        Some(n) => n,
+        None => {
+            dbg!("Failed to initialize node in create_invoice()");
+            return None;
+        }
+    };
+    match node.receive_payment(
+        amount_sats * 1000, //sats to msats
+        description,
+        86400, // 24 hours
+    ) {
+        Ok(i) => Some(i.into_signed_raw().to_string()),
+        Err(e) => {
+            dbg!(&e);
+            None
+        }
+    }
+}
+
+/// returns payment hash if successful
+#[tauri::command]
+pub fn pay_invoice(invoice: String) -> Option<[u8; 32]> {
+    let node = init_lazy(None).expect("Failed to initialize node");
+    let invoice = match SignedRawBolt11Invoice::from_str(&invoice) {
+        Ok(i) => i,
+        Err(e) => {
+            dbg!(&e);
+            return None;
+        }
+    };
+    let invoice = match Bolt11Invoice::from_signed(invoice) {
+        Ok(i) => i,
+        Err(e) => {
+            dbg!(&e);
+            return None;
+        }
+    };
+    match node.send_payment(&invoice) {
+        Ok(p) => Some(p.0),
+        Err(e) => {
+            dbg!(&e);
+            None
+        }
+    }
+}
+
+#[tauri::command]
+pub fn close_channel(node_id: String, channel_id: [u8; 32]) -> bool {
+    let node = match init_lazy(None){
+        Some(n) => n,
+        None => {
+            dbg!("Failed to initialize node in close_channel()");
+            return false;
+        }};
+    let pub_key = match PublicKey::from_str(&node_id) {
+        Ok(key) => key,
+        Err(e) => {
+            dbg!(&e);
+            return false;
+        }
+    };
+    let channel_id = ChannelId(channel_id);
+    match node.close_channel(&channel_id, pub_key) {
+        Ok(_) => return true,
+        Err(e) => {
+            dbg!(&e);
+            return false;
+        }
+    };
+}
+
+#[tauri::command]
+pub fn open_channel(
+    node_name: String,
+    node_id: String,
+    net_address: String,
+    channel_amount_sats: u64,
+    push_to_counterparty_msat: u64,
+    announce_channel: bool,
+) -> bool {
+    let empty_result = false;
+    let node = init_lazy(None).expect("Failed to initialize node");
+    let target_node_id = match PublicKey::from_str(&node_id) {
+        Ok(key) => key,
+        Err(e) => {
+            dbg!(&e);
+            return empty_result;
+        }
+    };
+    let target_address = match SocketAddress::from_str(&net_address) {
+        Ok(address) => address,
+        Err(e) => {
+            dbg!(&e);
+            return false;
+        }
+    };
+    let push_to_counterparty_msat: Option<u64> = if push_to_counterparty_msat > 1 {
+        Some(push_to_counterparty_msat)
+    } else {
+        None
+    };
+    let channel_config = None;
+    match node.connect_open_channel(
+        target_node_id,
+        target_address,
+        channel_amount_sats,
+        push_to_counterparty_msat,
+        channel_config,
+        announce_channel,
+    ) {
+        Ok(_) => true,
+        Err(e) => {
+            dbg!(&e);
+            false
+        }
+    }
+}
 
 // #[derive(serde::Serialize, serde::Deserialize)]
 // pub struct ChanDetails {

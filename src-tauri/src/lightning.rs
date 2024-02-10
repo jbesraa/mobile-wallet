@@ -218,33 +218,7 @@ pub fn pay_invoice(invoice: String) -> Option<[u8; 32]> {
 }
 
 #[tauri::command]
-pub fn close_channel(node_id: String, channel_id: [u8; 32]) -> bool {
-    let node = match init_lazy(None){
-        Some(n) => n,
-        None => {
-            dbg!("Failed to initialize node in close_channel()");
-            return false;
-        }};
-    let pub_key = match PublicKey::from_str(&node_id) {
-        Ok(key) => key,
-        Err(e) => {
-            dbg!(&e);
-            return false;
-        }
-    };
-    let channel_id = ChannelId(channel_id);
-    match node.close_channel(&channel_id, pub_key) {
-        Ok(_) => return true,
-        Err(e) => {
-            dbg!(&e);
-            return false;
-        }
-    };
-}
-
-#[tauri::command]
 pub fn open_channel(
-    node_name: String,
     node_id: String,
     net_address: String,
     channel_amount_sats: u64,

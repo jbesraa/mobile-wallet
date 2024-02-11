@@ -170,6 +170,7 @@ pub fn send_onchain_transaction(address: String, amount_sats: u64) -> bool {
 
 #[tauri::command]
 pub fn create_invoice(amount_sats: u64, description: &str) -> Option<String> {
+    dbg!("Creating invoice...");
     let node = match init_lazy(None) {
         Some(n) => n,
         None => {
@@ -177,6 +178,7 @@ pub fn create_invoice(amount_sats: u64, description: &str) -> Option<String> {
             return None;
         }
     };
+    dbg!("Got the node, Creating invoice...");
     match node.receive_payment(
         amount_sats * 1000, //sats to msats
         description,

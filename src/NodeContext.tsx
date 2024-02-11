@@ -221,7 +221,7 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 	): Promise<string> {
 		try {
 			let res: string = await invoke("create_invoice", {
-				amount_sat: amount_sat,
+				amountSats: amount_sat,
 				description: desc,
 			});
 			return res;

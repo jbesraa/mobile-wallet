@@ -17,19 +17,21 @@ function Home() {
 			if (!isRunning) {
 				await start_node();
 			}
+			const is_run = await is_node_running();
+			setIsRunning(is_run);
 		};
 		handler();
 	}, []);
 
-	useEffect(() => {
-		const timer = setInterval(async () => {
-			if (!isRunning) {
-				const isRunning = await is_node_running();
-				setIsRunning(isRunning);
-			}
-		}, 10);
-		return () => clearInterval(timer);
-	}, []);
+	// useEffect(() => {
+	// 	const timer = setInterval(async () => {
+	// 		if (!isRunning) {
+	// 			const isRunning = await is_node_running();
+	// 			setIsRunning(isRunning);
+	// 		}
+	// 	}, 1000);
+	// 	return () => clearInterval(timer);
+	// }, []);
 
 	useEffect(() => {
 		const handler = async () => {

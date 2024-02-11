@@ -1,13 +1,11 @@
+use ldk_node::{Node, Builder, LogLevel};
+use ldk_node::bdk::TransactionDetails;
 use ldk_node::bitcoin::secp256k1::PublicKey;
-use ldk_node::bitcoin::OutPoint;
+use ldk_node::bitcoin::{OutPoint, Network};
 use ldk_node::io::sqlite_store::SqliteStore;
 use ldk_node::lightning::ln::msgs::SocketAddress;
 use ldk_node::lightning::ln::ChannelId;
 use ldk_node::lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
-use ldk_node::{
-    Builder, ChannelDetails, LogLevel, Network, Node, PaymentDetails, PaymentDirection,
-    PaymentStatus, PeerDetails,
-};
 use std::str::FromStr;
 use std::sync::{Mutex, OnceLock};
 
@@ -263,6 +261,57 @@ pub fn open_channel(
             false
         }
     }
+}
+
+struct WalletTx {
+    pub txid: String,
+    pub amount_sats: u64,
+    pub received: bool,
+}
+
+#[tauri::command]
+pub fn list_onchain_transactions() -> Vec<WalletTx> {
+    let node = init_lazy(None).expect("Failed to initialize node");
+    let txs = node.list_onchain_transactions().unwrap();
+    txs.into_iter().map(|tx| tx.into()).collect()
+}
+
+impl From<TransactionDetails> for WalletTx {
+    fn from(tx: TransactionDetails) -> Self {
+        let amount_sats = if tx.sent > 0 { tx.sent } else { tx.received };
+        let received = tx.received > 0;
+        WalletTx {
+            txid: tx.txid.to_string(),
+            amount_sats,
+            received,
+        }
+    }
+}
+
+#[tauri::command]
+pub fn send_out(address: String, amount_sats: u64, fee_rate: u32) -> bool {
+    let node = match init_lazy(None) {
+        Some(n) => n,
+        None => {
+            dbg!("Failed to initialize node in new_onchain_address()");
+            return false;
+        }
+    };
+    let txid = match node.send_out(
+        &ldk_node::bitcoin::Address::from_str(&address)
+            .unwrap()
+            .assume_checked(),
+        amount_sats,
+        fee_rate,
+    ) {
+        Ok(txid) => txid,
+        Err(e) => {
+            dbg!(e);
+            return false;
+        }
+    };
+    dbg!(txid);
+    true
 }
 
 // #[derive(serde::Serialize, serde::Deserialize)]

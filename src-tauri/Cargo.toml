@@ -20,7 +20,7 @@ tauri-plugin-shell = "2.0.0-beta"
 tauri-plugin-fs = "2.0.0-beta"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-ldk-node = "0.2.1"
+ldk-node = {path= "../../ldk-node"}
 tauri-plugin-log = "2.0.0-beta"
 bip39 = { version = "2.0.0", features = ["rand"] }
 home-dir = "0.1.0"

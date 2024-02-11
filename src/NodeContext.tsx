@@ -19,7 +19,8 @@ export interface NodeActions {
 	get_onchain_balance: () => Promise<string>;
 	send_onchain_transaction: (
 		adress: string,
-		amout_msat: number
+		amout_msat: number,
+		fee_rate: number
 	) => Promise<string>;
 	create_invoice: (amount_sat: number, desc?: string) => Promise<string>;
 	update_config: (i: UpdateConfigInput) => Promise<boolean>;
@@ -135,12 +136,14 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 
 	async function send_onchain_transaction(
 		address: string,
-		amount_sat: number
+		amount_sat: number,
+		fee_rate: number
 	): Promise<string> {
 		try {
-			const res: string = await invoke("send_onchain_transaction", {
+			const res: string = await invoke("send_out", {
 				address,
 				amountSats: amount_sat,
+				feeRate: fee_rate,
 			});
 			return res;
 		} catch (e) {

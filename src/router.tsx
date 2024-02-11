@@ -35,6 +35,6 @@ export function Router() {
 		return <Send />;
 	} else if (current_route === "receive") {
 		return <Receive />;
-	}
+	} 
 	return <Home />;
 }

@@ -21,6 +21,7 @@ export interface NodeActions {
 		adress: string,
 		amout_msat: number
 	) => Promise<string>;
+	create_invoice: (amount_sat: number, desc?: string) => Promise<string>;
 	update_config: (i: UpdateConfigInput) => Promise<boolean>;
 	get_logs: () => Promise<string[]>;
 	sync_wallet: () => Promise<boolean>;
@@ -214,6 +215,22 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		}
 	}
 
+	async function create_invoice(
+		amount_sat: number,
+		desc?: string
+	): Promise<string> {
+		try {
+			let res: string = await invoke("create_invoice", {
+				amount_sat: amount_sat,
+				description: desc,
+			});
+			return res;
+		} catch (e) {
+			console.log(e);
+			return "";
+		}
+	}
+
 	async function get_logs(): Promise<string[]> {
 		try {
 			const res: string[] = await invoke("get_logs", {});
@@ -266,6 +283,7 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		get_onchain_address,
 		get_onchain_balance,
 		send_onchain_transaction,
+		create_invoice,
 		sync_wallet,
 		update_config,
 		connect_to_peer,

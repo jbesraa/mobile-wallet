@@ -1,6 +1,7 @@
 import "../App.css";
 import { useNodeContext } from "../NodeContext";
 import { useEffect, useState } from "react";
+import { useRouterContext } from "../router";
 
 function Home() {
 	const {
@@ -14,6 +15,7 @@ function Home() {
 		get_onchain_address,
 		send_onchain_transaction,
 	} = useNodeContext();
+	const { push_route } = useRouterContext();
 	const [balance, setBalance] = useState("0");
 	const [nodeId, setNodeId] = useState("");
 	const [address, setAddress] = useState("");
@@ -76,18 +78,12 @@ function Home() {
 				</button>
 			</div>
 			<div>{nodeId}</div>
-			<div>Address: {address}</div>
 			<div>{String(isRunning)}</div>
 			<div>esplora address: {esploraAddress}</div>
 			<div>listening address: {listeningAddress}</div>
 			<div style={{ padding: "1em" }}>
 				<button
-					onClick={() =>
-						send_onchain_transaction(
-							"bcrt1q755s2j3ud0k0dvfypl48qjqkn4fujg6ww0x9ur",
-							500000
-						)
-					}
+					onClick={() => push_route("send")}
 					style={{ width: "100%" }}
 				>
 					send
@@ -95,8 +91,7 @@ function Home() {
 			</div>
 			<div style={{ padding: "1em" }}>
 				<button
-					disabled={true}
-					onClick={() => {}}
+					onClick={() => push_route("receive")}
 					style={{ width: "100%" }}
 				>
 					Receive

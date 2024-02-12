@@ -23,6 +23,7 @@ export interface NodeActions {
 		fee_rate: number
 	) => Promise<string>;
 	create_invoice: (amount_sat: number, desc?: string) => Promise<string>;
+	list_onchain_transactions:()  => Promise<Array<WalletTx>>;
 	update_config: (i: UpdateConfigInput) => Promise<boolean>;
 	get_logs: () => Promise<string[]>;
 	sync_wallet: () => Promise<boolean>;
@@ -34,6 +35,12 @@ export interface NodeActions {
 	get_network: () => Promise<string>;
 	list_channels: () => Promise<ChannelDetails[]>;
 	list_payments: () => Promise<PaymentData[]>;
+}
+
+interface WalletTx {
+	txid: string;
+	sent: number;
+	received: number;
 }
 
 export const useNodeContext = () => useContext(NodeContext);
@@ -140,7 +147,7 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		fee_rate: number
 	): Promise<string> {
 		try {
-			const res: string = await invoke("send_out", {
+			const res: string = await invoke("send_onchain_transaction", {
 				address,
 				amountSats: amount_sat,
 				feeRate: fee_rate,
@@ -149,6 +156,19 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		} catch (e) {
 			console.log("Error send_onchain_tx", e);
 			return "";
+		}
+	}
+
+	async function list_onchain_transactions(): Promise<Array<WalletTx>> {
+		try {
+			const txs: Array<WalletTx> = await invoke(
+				"list_onchain_transactions",
+				{}
+			);
+			return txs;
+		} catch (e) {
+			console.log("Error listing txs", e);
+			return [];
 		}
 	}
 
@@ -287,6 +307,7 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		get_onchain_balance,
 		send_onchain_transaction,
 		create_invoice,
+		list_onchain_transactions,
 		sync_wallet,
 		update_config,
 		connect_to_peer,

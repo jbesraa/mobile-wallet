@@ -4,6 +4,42 @@ import { Button, TextField, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useRouterContext } from "../router";
 import SummarySend from "./SummarySend";
+import Box from "@mui/material/Box";
+import Slider from "@mui/material/Slider";
+
+function valuetext(value: number) {
+	return `${value} sat/vb`;
+}
+
+function FeeSlider(props: any) {
+	const { marks, min, max } = props;
+	return (
+		<>
+			<Typography
+				variant="subtitle2"
+				style={{
+					color: "gray",
+					justifySelf: "left",
+					textAlign: "left",
+				}}
+			>
+				Fee Rate (sat/vb)
+			</Typography>
+			<Box style={{ padding: "0.4em", paddingTop: 0 }}>
+				<Slider
+					valueLabelDisplay="auto"
+					name="Fee Rate"
+					onChange={(_, value) => props.onChange(value)}
+					defaultValue={marks[0].value}
+					valueLabelFormat={valuetext}
+					min={min}
+					max={max}
+					marks={marks}
+				/>
+			</Box>
+		</>
+	);
+}
 
 interface ReccomndedFee {
 	economyFee: number;
@@ -16,7 +52,7 @@ interface ReccomndedFee {
 function Send() {
 	const { push_route } = useRouterContext();
 	const [amount, setAmount] = useState("");
-	const [feeRate, setFeeRate] = useState(1);
+	const [feeRate, setFeeRate] = useState();
 	const [address, setAddress] = useState("");
 	const [reccomendedFee, setReccomendedFee] = useState<ReccomndedFee>(
 		{} as ReccomndedFee
@@ -68,60 +104,41 @@ function Send() {
 						value={amount}
 						variant="outlined"
 					/>
-					<TextField
-						id="outlined-basic"
-						onChange={(e) => setFeeRate(Number(e.target.value))}
-						label="Fee Rate"
-						value={feeRate}
-						variant="outlined"
+					<FeeSlider
+						onChange={(value: number) => setFeeRate(value)}
+						min={reccomendedFee.hourFee}
+						max={reccomendedFee.fastestFee}
+						marks={[
+							{
+								value: reccomendedFee.fastestFee,
+								label: "Fast",
+							},
+							{
+								value: reccomendedFee.halfHourFee,
+								label: reccomendedFee.halfHourFee,
+							},
+							{
+								value: reccomendedFee.hourFee,
+								label: "Slow",
+							},
+						]}
 					/>
 					<Typography
 						style={{ justifySelf: "start" }}
-						variant="body2"
-						gutterBottom
+						variant="subtitle2"
 					>
-						{`Economy Fee: ${reccomendedFee.economyFee}`}
+						Fee: {feeRate} sat/vb
 					</Typography>
 					<Typography
 						style={{ justifySelf: "start" }}
-						variant="body2"
-						gutterBottom
-					>
-						{`Fastest Fee: ${reccomendedFee.fastestFee}`}
-					</Typography>
-					<Typography
-						style={{ justifySelf: "start" }}
-						variant="body2"
-						gutterBottom
-					>
-						{`Half Hour Fee: ${reccomendedFee.halfHourFee}`}
-					</Typography>
-					<Typography
-						style={{ justifySelf: "start" }}
-						variant="body2"
-						gutterBottom
-					>
-						{`Hour Fee: ${reccomendedFee.hourFee}`}
-					</Typography>
-					{`Minimum Fee: ${reccomendedFee.minimumFee}`}
-					<Typography
-						style={{ justifySelf: "start" }}
-						variant="body2"
-						gutterBottom
-					></Typography>
-					<Typography
-						style={{ justifySelf: "start" }}
-						variant="body2"
-						gutterBottom
+						variant="subtitle2"
 					>
 						Your total fee will be: 2.5$ (0.0001 BTC)
 					</Typography>
 					<Button
 						variant="contained"
-						disabled={address === "" || amount === ""}
+						disabled={address === "" || amount === "" || !feeRate}
 						style={{
-							// backgroundColor: "inherit",
-							// color: "orange",
 							fontWeight: "bold",
 							fontSize: "1.1em",
 							width: "100%",

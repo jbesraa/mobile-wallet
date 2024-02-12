@@ -141,30 +141,30 @@ pub fn get_onchain_balance() -> String {
     }
 }
 
-#[tauri::command]
-pub fn send_onchain_transaction(address: String, amount_sats: u64) -> bool {
-    let node = match init_lazy(None) {
-        Some(n) => n,
-        None => {
-            dbg!("Failed to initialize node in new_onchain_address()");
-            return false;
-        }
-    };
-    let txid = match node.send_to_onchain_address(
-        &ldk_node::bitcoin::Address::from_str(&address)
-            .unwrap()
-            .assume_checked(),
-        amount_sats,
-    ) {
-        Ok(txid) => txid,
-        Err(e) => {
-            dbg!(e);
-            return false;
-        }
-    };
-    dbg!(txid);
-    true
-}
+// #[tauri::command]
+// pub fn send_onchain_transaction(address: String, amount_sats: u64) -> bool {
+//     let node = match init_lazy(None) {
+//         Some(n) => n,
+//         None => {
+//             dbg!("Failed to initialize node in new_onchain_address()");
+//             return false;
+//         }
+//     };
+//     let txid = match node.send_to_onchain_address(
+//         &ldk_node::bitcoin::Address::from_str(&address)
+//             .unwrap()
+//             .assume_checked(),
+//         amount_sats,
+//     ) {
+//         Ok(txid) => txid,
+//         Err(e) => {
+//             dbg!(e);
+//             return false;
+//         }
+//     };
+//     dbg!(txid);
+//     true
+// }
 
 #[tauri::command]
 pub fn create_invoice(amount_sats: u64, description: &str) -> Option<String> {
@@ -263,33 +263,33 @@ pub fn open_channel(
     }
 }
 
-struct WalletTx {
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct WalletTx {
     pub txid: String,
-    pub amount_sats: u64,
-    pub received: bool,
+    pub received: u64,
+    pub sent: u64,
 }
 
 #[tauri::command]
 pub fn list_onchain_transactions() -> Vec<WalletTx> {
     let node = init_lazy(None).expect("Failed to initialize node");
     let txs = node.list_onchain_transactions().unwrap();
+    dbg!(&txs);
     txs.into_iter().map(|tx| tx.into()).collect()
 }
 
 impl From<TransactionDetails> for WalletTx {
     fn from(tx: TransactionDetails) -> Self {
-        let amount_sats = if tx.sent > 0 { tx.sent } else { tx.received };
-        let received = tx.received > 0;
         WalletTx {
             txid: tx.txid.to_string(),
-            amount_sats,
-            received,
+            sent: tx.sent,
+            received: tx.received,
         }
     }
 }
 
 #[tauri::command]
-pub fn send_out(address: String, amount_sats: u64, fee_rate: u32) -> bool {
+pub fn send_onchain_transaction(address: String, amount_sats: u64, fee_rate: u32) -> bool {
     let node = match init_lazy(None) {
         Some(n) => n,
         None => {

@@ -26,7 +26,8 @@ pub fn run() {
             lightning::get_onchain_balance,
             lightning::send_onchain_transaction,
             lightning::create_invoice,
-            lightning::pay_invoice
+            lightning::pay_invoice,
+            lightning::list_onchain_transactions,
             // lightning::get_listening_address,
             // lightning::connect_to_node,
             // lightning::list_peers,

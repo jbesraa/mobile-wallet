@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNodeContext } from "../NodeContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouterContext } from "../router";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import { Button, TextField, Typography } from "@mui/material";
@@ -11,9 +11,22 @@ import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import QRCode from "react-qr-code";
 
 const LightningReceive = () => {
-	const { create_invoice } = useNodeContext();
+	const { create_invoice, decode_invoice } = useNodeContext();
 	const [amount, setAmount] = useState("");
 	const [invoice, setInvoice] = useState("");
+	const [decodedAmount, setDecodedAmount] = useState(0);
+	const [decodedDesc, setDecodedDesc] = useState("");
+
+	useEffect(() => {
+		if (invoice === "") return;
+		const handler = async () => {
+			const decoded = await decode_invoice(invoice);
+			setDecodedAmount(decoded[1]);
+			setDecodedDesc(decoded[0]);
+			console.log(decoded);
+		};
+		handler();
+	}, [invoice]);
 
 	return (
 		<>
@@ -34,7 +47,12 @@ const LightningReceive = () => {
 				variant="outlined"
 			/>
 			<Typography>
-				{invoice ? invoice.slice(0, 10) + "..." + invoice.slice(-10, 10) : ""}
+				{invoice
+					? invoice.slice(0, 10) + "..." + invoice.slice(-10, 10)
+					: ""}
+			</Typography>
+			<Typography>
+				{decodedAmount} sats - {decodedDesc}
 			</Typography>
 			<Button
 				variant="contained"

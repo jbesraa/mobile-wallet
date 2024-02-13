@@ -23,7 +23,8 @@ export interface NodeActions {
 		fee_rate: number
 	) => Promise<string>;
 	create_invoice: (amount_sat: number, desc?: string) => Promise<string>;
-	list_onchain_transactions:()  => Promise<Array<WalletTx>>;
+	list_onchain_transactions: () => Promise<Array<WalletTx>>;
+	decode_invoice: (i: string) => Promise<[string, number]>;
 	update_config: (i: UpdateConfigInput) => Promise<boolean>;
 	get_logs: () => Promise<string[]>;
 	sync_wallet: () => Promise<boolean>;
@@ -172,6 +173,18 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		}
 	}
 
+	async function decode_invoice(i: string): Promise<[string, number]> {
+		try {
+			const txs: [string, number] = await invoke("decode_invoice", {
+				invoice: i,
+			});
+			return txs;
+		} catch (e) {
+			console.log("Error listing txs", e);
+			return ["", 0];
+		}
+	}
+
 	async function sync_wallet(): Promise<boolean> {
 		try {
 			const synced_wallet: boolean = await invoke("sync_wallet", {});
@@ -308,6 +321,7 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		send_onchain_transaction,
 		create_invoice,
 		list_onchain_transactions,
+		decode_invoice,
 		sync_wallet,
 		update_config,
 		connect_to_peer,

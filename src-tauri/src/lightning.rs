@@ -1,11 +1,11 @@
-use ldk_node::{Node, Builder, LogLevel};
 use ldk_node::bdk::TransactionDetails;
 use ldk_node::bitcoin::secp256k1::PublicKey;
-use ldk_node::bitcoin::{OutPoint, Network};
+use ldk_node::bitcoin::{Network, OutPoint};
 use ldk_node::io::sqlite_store::SqliteStore;
 use ldk_node::lightning::ln::msgs::SocketAddress;
 use ldk_node::lightning::ln::ChannelId;
 use ldk_node::lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
+use ldk_node::{Builder, LogLevel, Node};
 use std::str::FromStr;
 use std::sync::{Mutex, OnceLock};
 
@@ -188,6 +188,31 @@ pub fn create_invoice(amount_sats: u64, description: &str) -> Option<String> {
             None
         }
     }
+}
+
+/// decode bolt11 invoice
+#[tauri::command]
+pub fn decode_invoice(invoice: String) -> Option<(String, u64)> {
+    let invoice = match SignedRawBolt11Invoice::from_str(&invoice) {
+        Ok(i) => i,
+        Err(e) => {
+            dbg!(&e);
+            return None;
+        }
+    };
+    let invoice = match Bolt11Invoice::from_signed(invoice) {
+        Ok(i) => i,
+        Err(e) => {
+            dbg!(&e);
+            return None;
+        }
+    };
+    let description = invoice.description().to_string();
+    let amount_sats = match invoice.amount_milli_satoshis() {
+        Some(a) => a / 1000,
+        None => 0,
+    };
+    Some((description, amount_sats))
 }
 
 /// returns payment hash if successful

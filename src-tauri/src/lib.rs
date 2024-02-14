@@ -2,11 +2,7 @@
 pub mod lightning;
 use tauri_plugin_log::{Target, TargetKind};
 pub mod paths;
-pub mod rpc_client;
 pub mod wallet;
-pub mod walletrpc {
-    tonic::include_proto!("walletrpc");
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -19,27 +15,33 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
-            lightning::get_node_id,
+            wallet::create_wallet,
             lightning::start_node,
             lightning::stop_node,
-            // lightning::get_net_address,
+            lightning::get_node_id,
+            lightning::is_node_running,
+            lightning::get_esplora_address,
+            lightning::get_listening_address,
+            lightning::get_onchain_address,
+            lightning::get_onchain_balance,
+            lightning::send_onchain_transaction,
+            lightning::create_invoice,
+            lightning::pay_invoice,
+            lightning::list_onchain_transactions,
+            lightning::decode_invoice,
+            // lightning::get_listening_address,
             // lightning::connect_to_node,
-            lightning::list_peers,
-            lightning::new_onchain_address,
+            // lightning::list_peers,
+            // lightning::new_onchain_address,
             // lightning::disconnect_peer,
             // lightning::list_channels,
             // lightning::create_invoice,
             // lightning::pay_invoice,
-            lightning::open_channel,
-            lightning::close_channel,
-            lightning::total_onchain_balance,
-            lightning::is_node_running,
+            // lightning::open_channel,
+            // lightning::close_channel,
+            // lightning::total_onchain_balance,
             // lightning::sync_wallet,
-            lightning::get_esplora_address,
-            wallet::create_wallet,
-            wallet::create_dirs,
             // wallet::update_config,
-            wallet::list_wallets,
             // bitcoin::load_wallet,
             // bitcoin::get_new_address,
             // bitcoin::create_transaction,

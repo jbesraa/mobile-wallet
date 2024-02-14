@@ -55,7 +55,6 @@ export enum BitcoinUnit {
 }
 
 export interface CreateWalletInput {
-	walletName: string;
 	listeningAddress: string;
 	esploraAddress: string;
 }
@@ -81,7 +80,6 @@ export interface StartNodeInput {
 }
 
 export interface UpdateConfigInput {
-	walletName: string;
 	esploraAddress: string;
 	listeningAddress: string;
 }

@@ -36,6 +36,10 @@ export interface NodeActions {
 	get_network: () => Promise<string>;
 	list_channels: () => Promise<ChannelDetails[]>;
 	list_payments: () => Promise<PaymentData[]>;
+	read_token: () => Promise<string>;
+	get_trusted_balance: () => Promise<string>;
+	get_trusted_bolt12_offer: () => Promise<string>;
+	pay_trusted_bolt12_offer: (offer: string) => Promise<string>; 
 }
 
 interface WalletTx {
@@ -309,6 +313,48 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		}
 	}
 
+	async function read_token(): Promise<string> {
+		try {
+			const res: string = await invoke("read_token", {});
+			return res;
+		} catch (e) {
+			console.log("Error update_config", e);
+			return "";
+		}
+	}
+
+	async function get_trusted_balance(): Promise<string> {
+		try {
+			const res: string = await invoke("get_balance", {});
+			return res;
+		} catch (e) {
+			console.log("Error get_trusted_balance", e);
+			return "";
+		}
+	}
+
+	async function get_trusted_bolt12_offer(): Promise<string> {
+		try {
+			const res: string = await invoke("create_bolt12_offer", {});
+			console.log("here", res);
+			return res;
+		} catch (e) {
+			console.log("Error get_trusted_bolt12_offer", e);
+			return "";
+		}
+	}
+
+	async function pay_trusted_bolt12_offer(offer: string): Promise<string> {
+		try {
+			const res: string = await invoke("pay_bolt12_offer", { offer });
+			console.log("here", res);
+			return res;
+		} catch (e) {
+			console.log("Error get_trusted_bolt12_offer", e);
+			return "";
+		}
+	}
+
 	const state: NodeActions = {
 		create_wallet,
 		start_node,
@@ -333,6 +379,10 @@ export const NodeContextProvider = ({ children }: { children: any }) => {
 		list_payments,
 		get_network,
 		get_logs,
+		read_token,
+		get_trusted_balance,
+		get_trusted_bolt12_offer,
+		pay_trusted_bolt12_offer
 	};
 
 	return (

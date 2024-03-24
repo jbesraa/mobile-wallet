@@ -3,6 +3,7 @@ pub mod lightning;
 use tauri_plugin_log::{Target, TargetKind};
 pub mod paths;
 pub mod wallet;
+pub mod trusted;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -27,7 +28,7 @@ pub fn run() {
             lightning::send_onchain_transaction,
             lightning::create_invoice,
             lightning::pay_invoice,
-            lightning::list_onchain_transactions,
+            // lightning::list_onchain_transactions,
             lightning::decode_invoice,
             // lightning::get_listening_address,
             // lightning::connect_to_node,
@@ -45,6 +46,12 @@ pub fn run() {
             // bitcoin::load_wallet,
             // bitcoin::get_new_address,
             // bitcoin::create_transaction,
+            trusted::save_token,
+            trusted::read_token,
+            trusted::create_bolt12_offer,
+            trusted::pay_bolt12_offer,
+            trusted::list_payments,
+            trusted::get_balance,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

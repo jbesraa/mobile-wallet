@@ -1,6 +1,7 @@
 use pathos::user::app_data_dir;
 
 const PROJECT_FOLDER_NAME: &str = ".bits-wallet";
+const TOKEN_PROJECT_FOLDER_NAME: &str = ".bits-token";
 
 pub struct UserPaths;
 
@@ -22,6 +23,16 @@ impl UserPaths {
         // format!("{}/{}", self.home_dir(), PROJECT_FOLDER_NAME)
     }
 
+    pub fn token_project_base_dir() -> String {
+        app_data_dir(TOKEN_PROJECT_FOLDER_NAME)
+            .unwrap()
+            .into_os_string()
+            .to_str()
+            .unwrap()
+            .to_string()
+        // format!("{}/{}", self.home_dir(), PROJECT_FOLDER_NAME)
+    }
+
     pub fn seed_file() -> String {
         format!("{}/seed.txt", UserPaths::project_base_dir())
     }
@@ -32,5 +43,9 @@ impl UserPaths {
 
     pub fn ldk_data_dir() -> String {
         format!("{}/ldk-data", UserPaths::project_base_dir())
+    }
+
+    pub fn desktop_token() -> String {
+        format!("{}/desktop-token.txt", UserPaths::token_project_base_dir())
     }
 }

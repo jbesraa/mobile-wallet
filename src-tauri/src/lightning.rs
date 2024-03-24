@@ -1,9 +1,8 @@
-use ldk_node::bdk::TransactionDetails;
 use ldk_node::bitcoin::secp256k1::PublicKey;
-use ldk_node::bitcoin::{Network, OutPoint};
+use ldk_node::bitcoin::Network;
 use ldk_node::io::sqlite_store::SqliteStore;
 use ldk_node::lightning::ln::msgs::SocketAddress;
-use ldk_node::lightning::ln::ChannelId;
+use ldk_node::lightning::offers::offer::Offer;
 use ldk_node::lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
 use ldk_node::{Builder, LogLevel, Node};
 use std::str::FromStr;
@@ -27,11 +26,11 @@ pub fn start_node() -> (bool, String) {
         }
     };
     if let Some(node) = init_lazy(Some(NodeConf {
-        network: ldk_node::bitcoin::Network::Regtest,
+        network: ldk_node::bitcoin::Network::Signet,
         seed,
         storage_dir: UserPaths::ldk_data_dir(),
         listening_address: config.get_listening_address(),
-        esplora_address: config.get_esplora_address(),
+        esplora_address: "https://mutinynet.com/api".to_string()
     })) {
         match node.start() {
             Ok(_) => {
@@ -76,9 +75,10 @@ pub fn is_node_running() -> bool {
     match init_lazy(None) {
         Some(node) => {
             dbg!("FOUND");
-            let isrunning = node.is_running();
-            dbg!(&isrunning);
-            isrunning
+            // let isrunning = node.is_running();
+            // dbg!(&isrunning);
+            // isrunning
+            false
         }
         None => {
             dbg!("NOTFOUND");
@@ -114,7 +114,7 @@ pub fn get_onchain_address() -> String {
             return "".to_string();
         }
     };
-    match node.new_onchain_address() {
+    match node.onchain_payment().new_address() {
         Ok(a) => a.to_string(),
         Err(e) => {
             dbg!(e);
@@ -124,21 +124,15 @@ pub fn get_onchain_address() -> String {
 }
 
 #[tauri::command]
-pub fn get_onchain_balance() -> String {
+pub fn get_onchain_balance() -> u64 {
     let node = match init_lazy(None) {
         Some(n) => n,
         None => {
             dbg!("Failed to initialize node in new_onchain_address()");
-            return "".to_string();
+            return 0;
         }
     };
-    match node.total_onchain_balance_sats() {
-        Ok(a) => a.to_string(),
-        Err(e) => {
-            dbg!(e);
-            "".to_string()
-        }
-    }
+    node.list_balances().total_onchain_balance_sats
 }
 
 // #[tauri::command]
@@ -177,12 +171,11 @@ pub fn create_invoice(amount_sats: u64, description: &str) -> Option<String> {
         }
     };
     dbg!("Got the node, Creating invoice...");
-    match node.receive_payment(
+    match node.bolt12_payment().receive(
         amount_sats * 1000, //sats to msats
         description,
-        86400, // 24 hours
     ) {
-        Ok(i) => Some(i.into_signed_raw().to_string()),
+        Ok(i) => Some(i.to_string()),
         Err(e) => {
             dbg!(&e);
             None
@@ -217,23 +210,16 @@ pub fn decode_invoice(invoice: String) -> Option<(String, u64)> {
 
 /// returns payment hash if successful
 #[tauri::command]
-pub fn pay_invoice(invoice: String) -> Option<[u8; 32]> {
+pub fn pay_invoice(offer: String, token: String) -> Option<[u8; 32]> {
     let node = init_lazy(None).expect("Failed to initialize node");
-    let invoice = match SignedRawBolt11Invoice::from_str(&invoice) {
+    let offer = match Offer::from_str(&offer) {
         Ok(i) => i,
         Err(e) => {
             dbg!(&e);
             return None;
         }
     };
-    let invoice = match Bolt11Invoice::from_signed(invoice) {
-        Ok(i) => i,
-        Err(e) => {
-            dbg!(&e);
-            return None;
-        }
-    };
-    match node.send_payment(&invoice) {
+    match node.bolt12_payment().send(&offer, Some(token)) {
         Ok(p) => Some(p.0),
         Err(e) => {
             dbg!(&e);
@@ -295,26 +281,26 @@ pub struct WalletTx {
     pub sent: u64,
 }
 
-#[tauri::command]
-pub fn list_onchain_transactions() -> Vec<WalletTx> {
-    let node = init_lazy(None).expect("Failed to initialize node");
-    let txs = node.list_onchain_transactions().unwrap();
-    dbg!(&txs);
-    txs.into_iter().map(|tx| tx.into()).collect()
-}
+// #[tauri::command]
+// pub fn list_onchain_transactions() -> Vec<WalletTx> {
+//     let node = init_lazy(None).expect("Failed to initialize node");
+//     let txs = node.list_onchain_transactions().unwrap();
+//     dbg!(&txs);
+//     txs.into_iter().map(|tx| tx.into()).collect()
+// }
 
-impl From<TransactionDetails> for WalletTx {
-    fn from(tx: TransactionDetails) -> Self {
-        WalletTx {
-            txid: tx.txid.to_string(),
-            sent: tx.sent,
-            received: tx.received,
-        }
-    }
-}
+// impl From<TransactionDetails> for WalletTx {
+//     fn from(tx: TransactionDetails) -> Self {
+//         WalletTx {
+//             txid: tx.txid.to_string(),
+//             sent: tx.sent,
+//             received: tx.received,
+//         }
+//     }
+// }
 
 #[tauri::command]
-pub fn send_onchain_transaction(address: String, amount_sats: u64, fee_rate: u32) -> bool {
+pub fn send_onchain_transaction(address: String, amount_sats: u64, _fee_rate: u32) -> bool {
     let node = match init_lazy(None) {
         Some(n) => n,
         None => {
@@ -322,12 +308,11 @@ pub fn send_onchain_transaction(address: String, amount_sats: u64, fee_rate: u32
             return false;
         }
     };
-    let txid = match node.send_out(
+    let txid = match node.onchain_payment().send_to_address(
         &ldk_node::bitcoin::Address::from_str(&address)
             .unwrap()
             .assume_checked(),
         amount_sats,
-        fee_rate,
     ) {
         Ok(txid) => txid,
         Err(e) => {
@@ -603,9 +588,9 @@ pub struct NodeConf {
 }
 
 static IS_OUR_NODE_INIT: OnceLock<Mutex<bool>> = OnceLock::new();
-static OUR_NODE: OnceLock<Node<SqliteStore>> = OnceLock::new();
+static OUR_NODE: OnceLock<Node> = OnceLock::new();
 
-pub fn init_lazy(init_config: Option<NodeConf>) -> Option<&'static Node<SqliteStore>> {
+pub fn init_lazy(init_config: Option<NodeConf>) -> Option<&'static Node> {
     match OUR_NODE.get() {
         Some(_) => return OUR_NODE.get(),
         None => {
@@ -620,7 +605,7 @@ pub fn init_lazy(init_config: Option<NodeConf>) -> Option<&'static Node<SqliteSt
             let mut initialized = initializing_mutex.lock().unwrap();
             if !*initialized {
                 let node = Builder::new()
-                    .set_network(Network::Regtest)
+                    .set_network(Network::Signet)
                     .set_log_level(LogLevel::Info)
                     .set_log_dir_path(format!("{}/logs", &config.storage_dir))
                     .set_storage_dir_path(config.storage_dir)

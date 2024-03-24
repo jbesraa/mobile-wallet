@@ -4,10 +4,10 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
-import QRCode from "react-qr-code";
+// import QRCode from "react-qr-code";
 import axios from "axios";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
-import { Button, TextField, Typography } from "@mui/material";
+import { TextField, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useRouterContext } from "../router";
 import SummarySend from "./SummarySend";
@@ -56,58 +56,87 @@ interface ReccomndedFee {
 	minimumFee: number;
 }
 
-const LightningSend = () => {
-	const { decode_invoice } = useNodeContext();
-	const [invoice, setInvoice] = useState("");
-	const [decodedAmount, setDecodedAmount] = useState(0);
-	const [decodedDesc, setDecodedDesc] = useState("");
-
-	useEffect(() => {
-		if (invoice === "") return;
-		const handler = async () => {
-			const decoded = await decode_invoice(invoice);
-			setDecodedAmount(decoded[1]);
-			setDecodedDesc(decoded[0]);
-			console.log(decoded);
-		};
-		handler();
-	}, [invoice]);
+const TrustedSend = () => {
+	const { pay_trusted_bolt12_offer } = useNodeContext();
+	const [offer, setOffer] = useState("");
 
 	return (
 		<>
-			<QRCode
-				style={{
-					width: "100%",
-					height: "100%",
-					display: invoice ? "inherit" : "none",
-				}}
-				value={invoice}
-			/>
 			<TextField
 				id="outlined-basic"
-				onChange={(e) => setInvoice(e.target.value)}
-				label="Amount (sats)"
-				value={invoice}
+				onChange={(e) => setOffer(e.target.value)}
+				label="Offer"
+				value={offer}
 				variant="outlined"
 			/>
-			<Typography>
-				{decodedAmount} sats - {decodedDesc}
-			</Typography>
-			<Button
-				variant="contained"
-				disabled={!invoice}
+			<button
 				style={{
 					fontWeight: "bold",
 					fontSize: "1.1em",
 					width: "100%",
 				}}
-				onClick={async () => {}}
+				onClick={async () => {
+					pay_trusted_bolt12_offer(offer);
+				}}
 			>
-				Continue
-			</Button>
+				Pay
+			</button>
 		</>
 	);
 };
+
+// const LightningSend = () => {
+// 	const { decode_invoice } = useNodeContext();
+// 	const [invoice, setInvoice] = useState("");
+// 	const [decodedAmount, setDecodedAmount] = useState(0);
+// 	const [decodedDesc, setDecodedDesc] = useState("");
+
+// 	useEffect(() => {
+// 		if (invoice === "") return;
+// 		const handler = async () => {
+// 			const decoded = await decode_invoice(invoice);
+// 			setDecodedAmount(decoded[1]);
+// 			setDecodedDesc(decoded[0]);
+// 			console.log(decoded);
+// 		};
+// 		handler();
+// 	}, [invoice]);
+
+// 	return (
+// 		<>
+// 			<QRCode
+// 				style={{
+// 					width: "100%",
+// 					height: "100%",
+// 					display: invoice ? "inherit" : "none",
+// 				}}
+// 				value={invoice}
+// 			/>
+// 			<TextField
+// 				id="outlined-basic"
+// 				onChange={(e) => setInvoice(e.target.value)}
+// 				label="Amount (sats)"
+// 				value={invoice}
+// 				variant="outlined"
+// 			/>
+// 			<Typography>
+// 				{decodedAmount} sats - {decodedDesc}
+// 			</Typography>
+// 			<Button
+// 				variant="contained"
+// 				disabled={!invoice}
+// 				style={{
+// 					fontWeight: "bold",
+// 					fontSize: "1.1em",
+// 					width: "100%",
+// 				}}
+// 				onClick={async () => {}}
+// 			>
+// 				Continue
+// 			</Button>
+// 		</>
+// 	);
+// };
 
 const OnchainSend = () => {
 	const [amount, setAmount] = useState("");
@@ -181,9 +210,7 @@ const OnchainSend = () => {
 			<Typography style={{ justifySelf: "start" }} variant="subtitle2">
 				Your total fee will be: 2.5$ (0.0001 BTC)
 			</Typography>
-			<Button
-				variant="contained"
-				disabled={address === "" || amount === "" || !feeRate}
+			<button
 				style={{
 					fontWeight: "bold",
 					fontSize: "1.1em",
@@ -192,7 +219,7 @@ const OnchainSend = () => {
 				onClick={() => setShowSummary(true)}
 			>
 				Continue
-			</Button>
+			</button>
 		</div>
 	);
 };
@@ -224,7 +251,7 @@ function Send() {
 					<Tab icon={<ElectricBoltIcon />} />
 					<Tab icon={<CurrencyBitcoinIcon />} />
 				</Tabs>
-				{value === 0 && <LightningSend />}
+				{value === 0 && <TrustedSend />}
 				{value === 1 && <OnchainSend />}
 			</div>
 		</div>

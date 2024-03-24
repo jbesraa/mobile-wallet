@@ -10,6 +10,40 @@ import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import QRCode from "react-qr-code";
 
+const TrustedReceive = () => {
+	const { get_trusted_bolt12_offer } = useNodeContext();
+	const [offer, setOffer] = useState("");
+
+	return (
+		<>
+			<TextField
+				id="outlined-basic"
+				label="Offer"
+				value={offer}
+				variant="outlined"
+			/>
+			<Button
+				variant="contained"
+				style={{
+					backgroundColor: "black",
+					color: "orange",
+					fontWeight: "bold",
+					fontSize: "1.1em",
+					width: "100%",
+				}}
+				onClick={async () => {
+					const off = await get_trusted_bolt12_offer();
+					console.log(off);
+					setOffer(off);
+				}}
+			>
+				Create Offer
+			</Button>
+		</>
+	);
+};
+
+
 const LightningReceive = () => {
 	const { create_invoice, decode_invoice } = useNodeContext();
 	const [amount, setAmount] = useState("");
@@ -116,7 +150,7 @@ function Receive() {
 					<Tab icon={<ElectricBoltIcon />} />
 					<Tab icon={<CurrencyBitcoinIcon />} />
 				</Tabs>
-				{value === 0 && <LightningReceive />}
+				{value === 0 && <TrustedReceive />}
 				{value === 1 && <OnchainReceive address={address} />}
 			</div>
 		</div>
